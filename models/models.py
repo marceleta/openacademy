@@ -52,6 +52,7 @@ class Session(models.Model):
     duration = fields.Float(digits=(6,2), help="Duration in days")
     seats = fields.Integer(string="Number of seats")
     active = fields.Boolean(default=True)
+    color = fields.Integer()
     
     instructor_id = fields.Many2one('res.partner', string="Instructor",
                                     domain=['|',
@@ -64,6 +65,8 @@ class Session(models.Model):
     taken_seats = fields.Float(string="Taken seats", compute='_taken_seats')
     end_date = fields.Date(string="End date", store=True, compute='_get_end_date',inverse='_set_end_date')
 
+    attendees_count = fields.Integer(string="Attendees count", compute="_get_attendees_count",store=True)
+    
     @api.depends('seats', 'attendee_ids')
     def _taken_seats(self):
         for r in self:
@@ -71,6 +74,11 @@ class Session(models.Model):
                 r.taken_seats = 0.0
             else:
                 r.taken_seats = 100.0 * len(r.attendee_ids) / r.seats
+
+    @api.depends('attendee_ids')
+    def _get_attendees_count(self):
+        for r in self:
+            r.attendees_count = len(r.attendees_ids)
 
     @api.onchange('seats', 'attendee_ids')
     def _verify_valid_seats(self):
